@@ -49,9 +49,15 @@ ENCODING = locale.getpreferredencoding() or "utf_8"
 RE_RIGHT_ALIGN = re.compile(r"^([\d\W]+( .*)?||NA|NAN|TRUE|FALSE)$", re.IGNORECASE)
 
 
+def text_copy(cell_renderer_text, path, new_text):
+    clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+    clipboard.set_text(new_text, -1)
+
 def init_column(index, view):
     """Initialize and return a column."""
     renderer = Gtk.CellRendererText()
+    renderer.set_property("editable", True)
+    renderer.connect("edited", text_copy)
     renderer.props.xalign = 1
     renderer.props.xpad = 9
     renderer.props.ypad = 9
@@ -59,7 +65,7 @@ def init_column(index, view):
     column = Gtk.TreeViewColumn(str(index), renderer, text=index)
     column.props.resizable = True
     if index == 0:
-        renderer.props.foreground = "#aaaaaa"
+        renderer.props.foreground = "#eeeeee"
         column.set_cell_data_func(renderer, render_cell, view)
     label = Gtk.Label(label=str(index))
     label.props.margin_start = 6
@@ -81,7 +87,7 @@ def init_view(ncolumns):
     priority = Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
     style.add_provider_for_screen(screen, provider, priority)
     selection = view.get_selection()
-    selection.props.mode = Gtk.SelectionMode.MULTIPLE
+    selection.props.mode = Gtk.SelectionMode.SINGLE
     columns = [str for x in range(ncolumns)]
     store = Gtk.ListStore(*columns)
     view.props.model = store
@@ -185,7 +191,7 @@ def render_cell(column, renderer, store, itr, view):
     # https://bugzilla.gnome.org/show_bug.cgi?id=709617#c1
     path = view.get_model().get_path(itr)
     row = path.get_indices()[0]
-    color = "#f2f2f2" if row % 2 == 0 else None
+    color = "#f2f2f2"
     for column in view.get_columns():
         for renderer in column.get_cells():
             renderer.props.cell_background = color
